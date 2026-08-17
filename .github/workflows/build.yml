@@ -16,8 +16,29 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
+  changes:
+    name: Detect Docker changes
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Detect changed Docker files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docker:
+              - 'Dockerfile'
+              - 'Dockerfile-go'
+              - 'versions.env'
+
   build:
     name: Build ${{ matrix.name }}
+    needs: changes
+    if: needs.changes.outputs.docker == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     strategy:
