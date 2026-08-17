@@ -1,0 +1,13 @@
+ARG RALPHEX_VERSION
+
+FROM ghcr.io/umputun/ralphex-go:${RALPHEX_VERSION}
+
+ARG OPENCODE_VERSION
+
+RUN npm install -g opencode-ai@${OPENCODE_VERSION} \
+    && command -v opencode >/dev/null \
+    && opencode --version
+
+LABEL org.opencontainers.image.title="Ralphex Go with OpenCode"
+LABEL org.opencontainers.image.description="Ralphex Go runtime with OpenCode CLI"
+LABEL org.opencontainers.image.source="https://github.com/sshroot/ralphex-opencode"
