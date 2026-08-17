@@ -4,9 +4,19 @@ FROM ghcr.io/umputun/ralphex:${RALPHEX_VERSION}
 
 ARG OPENCODE_VERSION
 
-RUN npm install -g opencode-ai@${OPENCODE_VERSION} \
-    && command -v opencode >/dev/null \
-    && opencode --version
+RUN ARCH="$(uname -m)" && \
+    case "$ARCH" in \
+        x86_64) OPENCODE_ARCH="x64" ;; \
+        aarch64) OPENCODE_ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: ${ARCH}"; exit 1 ;; \
+    esac && \
+    wget -qO /tmp/opencode.tar.gz \
+        "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VERSION}/opencode-linux-${OPENCODE_ARCH}-musl.tar.gz" && \
+    tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin && \
+    rm -f /tmp/opencode.tar.gz && \
+    chmod +x /usr/local/bin/opencode && \
+    command -v opencode >/dev/null && \
+    opencode --version
 
 LABEL org.opencontainers.image.title="Ralphex with OpenCode"
 LABEL org.opencontainers.image.description="Ralphex runtime with OpenCode CLI"
