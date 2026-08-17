@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["custom.regex"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)versions\\.env$/"],
+      "matchStrings": [
+        "RALPHEX_VERSION=(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "umputun/ralphex",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "versioningTemplate": "semver-coerced"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)versions\\.env$/"],
+      "matchStrings": [
+        "OPENCODE_VERSION=(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "opencode-ai",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "semver-coerced"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["umputun/ralphex"],
+      "groupName": "ralphex"
+    },
+    {
+      "matchPackageNames": ["opencode-ai"],
+      "groupName": "opencode"
+    }
+  ]
+}
