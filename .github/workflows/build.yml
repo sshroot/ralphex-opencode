@@ -78,7 +78,7 @@ jobs:
 
       - name: Test Ralphex
         run: |
-          docker run --rm local/${{ matrix.name }}:test ralphex --version
+          docker run --rm local/${{ matrix.name }}:test /srv/ralphex --version
 
       - name: Test OpenCode
         run: |
