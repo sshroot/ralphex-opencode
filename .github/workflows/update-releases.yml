@@ -1,0 +1,96 @@
+name: Update Ralphex and OpenCode versions
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  UPDATE_BRANCH: deps/update-releases
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest releases
+        id: releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ralphex_tag="$(gh api repos/umputun/ralphex/releases/latest --jq '.tag_name')"
+          opencode_tag="$(gh api repos/anomalyco/opencode/releases/latest --jq '.tag_name')"
+
+          ralphex_version="${ralphex_tag#v}"
+          opencode_version="${opencode_tag#v}"
+
+          test -n "$ralphex_version"
+          test -n "$opencode_version"
+
+          echo "RALPHEX_VERSION=$ralphex_version" >> "$GITHUB_OUTPUT"
+          echo "OPENCODE_VERSION=$opencode_version" >> "$GITHUB_OUTPUT"
+
+          echo "Latest Ralphex:  $ralphex_version"
+          echo "Latest OpenCode: $opencode_version"
+
+      - name: Check for updates
+        id: changes
+        env:
+          RALPHEX_VERSION: ${{ steps.releases.outputs.RALPHEX_VERSION }}
+          OPENCODE_VERSION: ${{ steps.releases.outputs.OPENCODE_VERSION }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_ralphex="$(sed -n 's/^RALPHEX_VERSION=//p' versions.env)"
+          current_opencode="$(sed -n 's/^OPENCODE_VERSION=//p' versions.env)"
+
+          changed=false
+
+          if [ "$current_ralphex" != "$RALPHEX_VERSION" ]; then
+            sed -i "s/^RALPHEX_VERSION=.*/RALPHEX_VERSION=$RALPHEX_VERSION/" versions.env
+            changed=true
+          fi
+
+          if [ "$current_opencode" != "$OPENCODE_VERSION" ]; then
+            sed -i "s/^OPENCODE_VERSION=.*/OPENCODE_VERSION=$OPENCODE_VERSION/" versions.env
+            changed=true
+          fi
+
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+
+      - name: Create update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$UPDATE_BRANCH"
+          git add versions.env
+          git commit -m "chore(deps): update Ralphex and OpenCode versions"
+          git push --force-with-lease origin "$UPDATE_BRANCH"
+
+          if gh pr list --head "$UPDATE_BRANCH" --base main --state open --json number --jq 'length' | grep -q '^0$'; then
+            gh pr create \
+              --base main \
+              --head "$UPDATE_BRANCH" \
+              --title "chore(deps): update Ralphex and OpenCode versions" \
+              --body "Automated update of Ralphex and OpenCode to their latest GitHub releases.\n\nSources:\n- https://github.com/umputun/ralphex/releases\n- https://github.com/anomalyco/opencode/releases"
+          fi
