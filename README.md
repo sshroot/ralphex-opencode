@@ -11,38 +11,35 @@ ghcr.io/sshroot/ralphex-go-opencode
 
 Both images are published for `linux/amd64` and `linux/arm64`.
 
-## OpenCode Docker wrapper
+## Docker wrapper
 
-The repository includes an OpenCode-aware Docker wrapper:
+The repository includes `scripts/ralphex-dk.sh`, adapted for the Ralphex + OpenCode image.
+It uses the OpenCode image by default and mounts OpenCode authentication/configuration when
+those directories exist on the host.
 
 ```bash
-./scripts/ralphex-dk.sh --opencode docs/plans/my-plan.md
+./scripts/ralphex-dk.sh docs/plans/my-plan.md
 ```
 
-The wrapper uses the bundled Claude-compatible OpenCode adapter and passes Ralphex's
-`--claude-command` override automatically. OpenCode authentication is optional: when
-present, the following host directories are mounted into the container:
+OpenCode directories:
 
 ```text
 ~/.local/share/opencode -> /home/app/.local/share/opencode
 ~/.config/opencode     -> /home/app/.config/opencode
 ```
 
-Claude credentials are also optional. If `~/.claude` (or `CLAUDE_CONFIG_DIR`) does not
-exist, the wrapper simply starts without mounting it. This makes the OpenCode image usable
-without a Claude Code login.
+Both OpenCode directories are optional. Claude Code credentials are optional as well: if
+`~/.claude` (or `CLAUDE_CONFIG_DIR`) does not exist, the wrapper does not mount it and does
+not fail.
 
-For a dry run:
+Use `--dry-run` to inspect the generated Docker command:
 
 ```bash
-./scripts/ralphex-dk.sh --opencode --dry-run docs/plans/my-plan.md
+./scripts/ralphex-dk.sh --dry-run docs/plans/my-plan.md
 ```
 
-The adapter is also available in the image as:
-
-```text
-/opt/ralphex/opencode-as-claude.sh
-```
+The wrapper also supports the usual `-E`, `-v`, `--docker`, `--network`, `--image`, and
+`--port` options.
 
 ## Tags
 
@@ -70,7 +67,7 @@ Ralphex and OpenCode GitHub Releases and opens a PR when either pinned version c
 
 ## Using with Ralphex
 
-Set the image explicitly:
+Set the image explicitly when using the normal Ralphex CLI:
 
 ```bash
 export RALPHEX_IMAGE=ghcr.io/sshroot/ralphex-go-opencode:latest
