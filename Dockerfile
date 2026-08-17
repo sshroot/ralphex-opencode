@@ -18,6 +18,9 @@ RUN ARCH="$(uname -m)" && \
     command -v opencode >/dev/null && \
     opencode --version
 
+COPY scripts/opencode/opencode-as-claude.sh /opt/ralphex/opencode-as-claude.sh
+RUN chmod +x /opt/ralphex/opencode-as-claude.sh
+
 LABEL org.opencontainers.image.title="Ralphex with OpenCode"
 LABEL org.opencontainers.image.description="Ralphex runtime with OpenCode CLI"
 LABEL org.opencontainers.image.source="https://github.com/sshroot/ralphex-opencode"
